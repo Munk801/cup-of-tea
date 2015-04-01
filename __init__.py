@@ -20,6 +20,7 @@ class Prefs(object):
 				self._data = self.initializeXML()
 		self.ignore = self.__dict__.keys()
 		self.ignore.append('ignore')
+		self.setAttrs()
 
 	def initializeXML(self):
 		# Use the old preference object ot pull the xml data
@@ -33,6 +34,10 @@ class Prefs(object):
 		rootkey =  prefs.root().name()
 		rootvalue = self.traverse(prefs.root())
 		return {rootkey : rootvalue}
+
+	def setAttrs(self):
+		for key, value in self._data.iteritems():
+			setattr(self, key, value)
 
 	def traverse(self, root):
 		data = {}
@@ -54,13 +59,9 @@ class Prefs(object):
 	def __str__(self):
 		return json.dumps(
 			self.data,
-			sort_keys=True,
 			indent=4,
 			separators=(',', ': ')
 		)
-
-	def __getitem__(self, key):
-		return self.data[key]
 
 	def __setitem__(self, key, value):
 		self._data[key] = value
@@ -72,12 +73,24 @@ class Prefs(object):
 				self._data[key] = val
 		return self._data
 
-	def save(self):
-		with open(self.path, 'w') as fh:
+	def get(self, path):
+		tokens = path.split(".")
+		depth = self._data
+		for token in tokens:
+			try:
+				depth = depth[token]
+			except KeyError as e:
+				depth = None
+				break
+		return depth
+
+	def save(self, path=""):
+		if not path:
+			path = self.path
+		with open(path, 'w') as fh:
 			json.dump(
 				self.data,
 				fh,
-				sort_keys=True,
 				indent=4,
 				separators=(',', ': ')
 			)
