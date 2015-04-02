@@ -1,12 +1,13 @@
 
-
+import getpass
 import json
 import os
 import sys
+from xml.etree import ElementTree as ET
 
 import blurdev
-from blurdev import prefs as bp
 from blurdev import osystem
+
 
 def find(name, reload=False, coreName='', shared=False, index=0):
 	"""
@@ -52,10 +53,7 @@ def find(name, reload=False, coreName='', shared=False, index=0):
 	return pref
 	# return _cache[key]
 
-
-
 class Prefs(object):
-
 	def __init__(self, filepath="", data={}):
 		self._data = data
 		if filepath:
@@ -64,43 +62,6 @@ class Prefs(object):
 		self.ignore.append('ignore')
 		self.setAttrs()
 
-	def initializeXML(self):
-		# Use the old preference object ot pull the xml data
-		oldprefs = bp.Preference()
-		oldprefs.load(self.filepath)
-		data = self.extractXMLData(oldprefs)
-		return data
-
-	def extractXMLData(self, prefs):
-		# Retrieve the root and store everything under the root
-		rootkey =  prefs.root().name()
-		rootvalue = self.traverse(prefs.root())
-		return {rootkey : rootvalue}
-
-	def setAttrs(self):
-		for key, value in self._data.iteritems():
-			setattr(self, key, value)
-
-	def traverse(self, root):
-		data = {}
-		element = root
-		# Add all the top level items for that element
-		for key, value in root.attributeDict().iteritems():
-			# Attempt to store the evaluation of the xml string
-			try:
-				# value types, JSON doesn't directly work with this
-				if type(eval(value)) == type:
-					data[key] = value
-				else:
-					data[key] = eval(value)
-			except (NameError, SyntaxError) as e:
-				data[key] = value
-		# Recursively traverse through children
-		if element.children():
-			for child in element.children():
-				childkey = child.name()
-				data[childkey] = self.traverse(child)
-		return data
 
 	def __str__(self):
 		return json.dumps(
@@ -122,16 +83,58 @@ class Prefs(object):
 				self._data[key] = val
 		return self._data
 
-	def get(self, path):
-		tokens = path.split(".")
-		depth = self._data
-		for token in tokens:
+ 	def initializeXML(self):
+		# Use the old preference object ot pull the xml data
+		oldprefs = ET.parse(self.filepath)
+		data = self.extractXMLData(oldprefs)
+		return data
+
+	def extractXMLData(self, prefs):
+		# Retrieve the root and store everything under the root
+		rootkey =  prefs.getroot().tag
+		rootvalue = self.traverse(prefs.getroot())
+		return {rootkey : rootvalue}
+
+	def get(self, key, default=None):
+		""" Retrieves a value from the key provided.
+
+		Retrieves a valued from the provided key.  Also, can provide a default
+		value if the key does not exist in the data store.
+
+		Args:
+			key(str) : Key from values wished to retrieve
+			default(Object|None) : Default value to provide if no value exists.
+
+		Returns:
+			Object : an object retrieved from the key.
+
+		"""
+		return self._data.get(key, default)
+
+	def setAttrs(self):
+		for key, value in self._data.iteritems():
+			setattr(self, key, value)
+
+	def traverse(self, root):
+		data = {}
+		element = root
+		# Add all the top level items for that element
+		for key, value in root.attrib.iteritems():
+			# Attempt to store the evaluation of the xml string
 			try:
-				depth = depth[token]
-			except KeyError as e:
-				depth = None
-				break
-		return depth
+				# value types, JSON doesn't directly work with this
+				if type(eval(value)) == type:
+					data[key] = value
+				else:
+					data[key] = eval(value)
+			except (NameError, SyntaxError) as e:
+				data[key] = value
+		# Recursively traverse through children
+		if element.getchildren():
+			for child in element.getchildren():
+				childkey = child.tag
+				data[childkey] = self.traverse(child)
+		return data
 
 	def path(self, coreName='', shared=False):
 		""" return the path to the application's prefrences folder """
