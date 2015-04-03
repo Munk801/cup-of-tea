@@ -93,7 +93,8 @@ class Prefs(object):
 		# Retrieve the root and store everything under the root
 		rootkey =  prefs.getroot().tag
 		rootvalue = self.traverse(prefs.getroot())
-		return {rootkey : rootvalue}
+		# return {rootkey : rootvalue}
+		return rootvalue
 
 	def get(self, key, default=None):
 		""" Retrieves a value from the key provided.
@@ -110,6 +111,11 @@ class Prefs(object):
 
 		"""
 		return self._data.get(key, default)
+
+	def recordProperty(self, prop, value):
+		""" **DEPRECATED** A backport for the old prefs to store prefs data.
+		"""
+		self._data[key] = value
 
 	def setAttrs(self):
 		for key, value in self._data.iteritems():
