@@ -1,4 +1,13 @@
+"""
+###############################################################################
+prefs - Access and create preference files for tools.
 
+Getting Started
+---------------
+
+
+###############################################################################
+"""
 import getpass
 import json
 import os
@@ -30,28 +39,18 @@ def find(name, reload=False, coreName='', shared=False, index=0):
 	:rtype: :class:`Preference`
 
 	"""
-	key = str(name).replace(' ', '-').lower()
-	if index > 0:
-		key = '%s%s' % (key, index)
-	pref = Prefs()
-	# pref.setShared(shared)
-	# pref.setCoreName(coreName)
-	# look for a default preference file
-	filename = os.path.join(pref.path(coreName, shared), '%s.pref' % key)
-	pref.load(filename)
+	if os.path.exists(name):
+		pref = Prefs(name)
+	else:
+		key = str(name).replace(' ', '-').lower()
+		if index > 0:
+			key = '%s%s' % (key, index)
+		pref = Prefs()
+		# look for a default preference file
+		filename = os.path.join(pref.path(coreName, shared), '%s.pref' % key)
+		pref.load(filename)
 	success = False
-	# if (os.path.exists(filename)):
-	# 	success = pref.load(filename)
-	# if not success:
-	# 	# create default information
-	# 	root = pref.addNode('preferences')
-	# 	root.setAttribute('name', name)
-	# 	root.setAttribute('version', 1.0)
-	# 	root.setAttribute('ui', '')
-	# pref.setName(key)
-	# _cache[key] = pref
 	return pref
-	# return _cache[key]
 
 class Prefs(object):
 	def __init__(self, filepath="", data={}):
@@ -69,6 +68,9 @@ class Prefs(object):
 			indent=4,
 			separators=(',', ': ')
 		)
+
+	def __eq__(self, other):
+		return str(self) == str(other)
 
 	def __getitem__(self, key):
 		return self._data[key]

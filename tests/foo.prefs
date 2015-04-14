@@ -1,0 +1,8 @@
+{
+    "bar": "BAR",
+    "foo": "FOO",
+    "hello": {
+        "dude": 1234
+    },
+    "spam": 1234.0
+}
