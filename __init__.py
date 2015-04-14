@@ -52,15 +52,25 @@ def find(name, reload=False, coreName='', shared=False, index=0):
 	success = False
 	return pref
 
+class SmartDict(dict):
+	def __getitem__(self, key):
+ 		if not self.get(key):
+			newdict = SmartDict()
+			self[key] = newdict
+			return newdict
+		else:
+			return super(SmartDict, self).__getitem__(key)
+
 class Prefs(object):
-	def __init__(self, filepath="", data={}):
+	def __init__(self, filepath="", data=None):
 		self._data = data
+ 		if not self._data:
+			self._data = dict()
 		if filepath:
 			self.load(filepath)
 		self.ignore = self.__dict__.keys()
 		self.ignore.append('ignore')
 		self.setAttrs()
-
 
 	def __str__(self):
 		return json.dumps(
@@ -72,7 +82,12 @@ class Prefs(object):
 	def __eq__(self, other):
 		return str(self) == str(other)
 
+	def __getattr__(self, prop):
+		pass
+
 	def __getitem__(self, key):
+		if not self._data.get(key):
+			self._data[key] = SmartDict()
 		return self._data[key]
 
 	def __setitem__(self, key, value):

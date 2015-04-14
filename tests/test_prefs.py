@@ -90,6 +90,11 @@ def test_save(prefs):
 	newprefs = Prefs(savepath)
 	assert newprefs.foo == "FOO"
 
+def test_nested_properties():
+	test = Prefs()
+	test['foo']['bar']['spam'] = 'Hello'
+	assert test["foo"]["bar"]["spam"] == "Hello"
+
 if __name__ == "__main__":
 	# test_find("")
 	pytest.main()
