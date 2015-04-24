@@ -18,25 +18,17 @@ import blurdev
 from blurdev import osystem
 
 
-def find(name, reload=False, coreName='', shared=False, index=0):
-	"""
-	Finds a preference for the with the inputed name.  If a pref already
-	exists within the cache, then the cached pref is returned; otherwise,
-	it is loaded from the blurdev preference location.
+def find(name, coreName='', shared=False, index=0):
+	""" Follows previous conventions to attempt to find a specific prefs file.
 
-	:param name: the name of the preference to retrieve
-	:type name: str
-	:param reload: reloads the cached item
-	:type reload: bool
-	:param coreName: specify a specific core name to save with.
-	:type coreName: str
-	:param shared: save to the network path not localy. Defaults to False
-	:type shared: bool
-	:param index: if > 0 append to the end of name. used to make multiple
-				  instances of the same prefs file. If zero it will not
-				  append anything for backwards compatibility. Defaults to 0
-	:type index: int
-	:rtype: :class:`Preference`
+	Args:
+		name(str): A full or relative filepath to the prefs file.
+		coreName(str): Base of path to look for prefs
+		shared(bool): Whether prefs is in a local or networked location
+		index(int): Index of prefs file for duplicates
+
+	Returns:
+		Prefs: A prefs file or an empty prefs file if none is found.
 
 	"""
 	if os.path.exists(name):
@@ -54,12 +46,21 @@ def find(name, reload=False, coreName='', shared=False, index=0):
 
 class SmartDict(dict):
 	def __getitem__(self, key):
+		if key.startswith("_"):
+			return
  		if not self.get(key):
 			newdict = SmartDict()
 			self[key] = newdict
 			return newdict
 		else:
 			return super(SmartDict, self).__getitem__(key)
+
+	def __getattr__(self, key):
+		if not key.startswith("_"):
+			return self[key]
+
+	def __setattr__(self, prop, value):
+		self[prop] = value
 
 class Prefs(object):
 	def __init__(self, filepath="", data=None):
@@ -83,7 +84,12 @@ class Prefs(object):
 		return str(self) == str(other)
 
 	def __getattr__(self, prop):
-		pass
+		# Do not attempt to retrieve any private properties
+		if prop.startswith("_"):
+			return
+		if not self._data.get(prop):
+			self._data[prop] = SmartDict()
+		return self._data[prop]
 
 	def __getitem__(self, key):
 		if not self._data.get(key):
@@ -92,6 +98,7 @@ class Prefs(object):
 
 	def __setitem__(self, key, value):
 		self._data[key] = value
+		self.setAttrs()
 
 	@property
 	def data(self):
@@ -136,10 +143,11 @@ class Prefs(object):
 
 	def setAttrs(self):
 		for key, value in self._data.iteritems():
-			setattr(self, key, value)
+			if not key.startswith("_"):
+				setattr(self, key, value)
 
 	def traverse(self, root):
-		data = {}
+		data = SmartDict()
 		element = root
 		# Add all the top level items for that element
 		for key, value in root.attrib.iteritems():
@@ -197,3 +205,4 @@ class Prefs(object):
 					return
 				# This may be an xml
 				self._data = self.initializeXML()
+				self.setAttrs()

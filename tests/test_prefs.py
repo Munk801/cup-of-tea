@@ -1,6 +1,6 @@
 import os
 import pytest
-from prefs import find, Prefs
+from prefs import find, Prefs, SmartDict
 
 # ==============================================================================
 # FIXTURES
@@ -21,6 +21,10 @@ def fromxml():
 		"xml.prefs",
 	)
 	return Prefs(xml_path)
+
+@pytest.fixture
+def newprefs():
+	return Prefs()
 
 # =============================================================================
 # TEST FUNCTIONS
@@ -54,8 +58,8 @@ def test_find(prefs):
 	created_prefs = Prefs(test_path)
 	assert created_prefs == found_prefs
 
-def test_creation():
-	pass
+def test_creation(newprefs):
+	assert newprefs == SmartDict()
 
 def test_backwards_compatibility(fromxml):
 	assert fromxml.name == "test"
@@ -77,6 +81,7 @@ def test_save():
 	assert loadedPrefs.foo == "TEST"
 
 def test_save(prefs):
+	""" Tests the prefs can be saved and retrieved. """
 	# Save out the path
 	savepath = os.path.join(
 		os.path.dirname(os.path.realpath(__file__)),
@@ -90,11 +95,24 @@ def test_save(prefs):
 	newprefs = Prefs(savepath)
 	assert newprefs.foo == "FOO"
 
-def test_nested_properties():
+def test_nested_keys():
+	"""Ensures accessing through keys retrieves the right info. """
 	test = Prefs()
 	test['foo']['bar']['spam'] = 'Hello'
 	assert test["foo"]["bar"]["spam"] == "Hello"
 
+def test_nested_properties(newprefs):
+	"""Ensures accessing through properties retrieves the right info. """
+	newprefs['foo']['bar']['spam'] = "Hello"
+	assert newprefs.foo == {'bar' : {'spam' : 'Hello'}}
+	assert newprefs.foo.bar == {'spam' : 'Hello'}
+	assert newprefs.foo.bar.spam == 'Hello'
+
+def test_nested_set_attrs(newprefs):
+	""" Set a nested attr for the prefs. """
+	newprefs.bro.man = "World"
+	assert newprefs.bro == {'man' : 'World'}
+
+
 if __name__ == "__main__":
-	# test_find("")
 	pytest.main()
