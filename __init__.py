@@ -48,7 +48,7 @@ class SmartDict(dict):
 	def __getitem__(self, key):
 		if key.startswith("_"):
 			return
- 		if not self.get(key):
+		if not self.get(key):
 			newdict = SmartDict()
 			self[key] = newdict
 			return newdict
@@ -65,7 +65,7 @@ class SmartDict(dict):
 class Prefs(object):
 	def __init__(self, filepath="", data=None):
 		self._data = data
- 		if not self._data:
+		if not self._data:
 			self._data = dict()
 		if filepath:
 			self.load(filepath)
@@ -107,13 +107,15 @@ class Prefs(object):
 				self._data[key] = val
 		return self._data
 
- 	def initializeXML(self):
+	def initializeXML(self):
+		""" Initializes the data from an xml document. """
 		# Use the old preference object ot pull the xml data
 		oldprefs = ET.parse(self.filepath)
 		data = self.extractXMLData(oldprefs)
 		return data
 
 	def extractXMLData(self, prefs):
+		""" Extracts each element in an xml into a key/value store. """
 		# Retrieve the root and store everything under the root
 		rootkey =  prefs.getroot().tag
 		rootvalue = self.traverse(prefs.getroot())
@@ -138,15 +140,45 @@ class Prefs(object):
 
 	def recordProperty(self, prop, value):
 		""" **DEPRECATED** A backport for the old prefs to store prefs data.
+
+		Args:
+			prop(str) : Key to store
+			value(object) : Value to attribute with the key
+
+		Returns:
+			None
+
+		Raises:
+			None
+
 		"""
 		self._data[key] = value
 
+	def restoreProperty(self, key, default):
+		""" **DEPRECATED** A backport for the old prefs to retrive prefs data.
+
+		Args:
+			key(str) : Element key to retrieve
+			default(object) : If key is not present, default value to pass
+		"""
+
 	def setAttrs(self):
+		""" Store all the key value pairs as properties for the instance.
+		"""
 		for key, value in self._data.iteritems():
 			if not key.startswith("_"):
 				setattr(self, key, value)
 
 	def traverse(self, root):
+		""" Recursive traverse an xml to retrieve the data.
+
+		Args:
+			root(xml.etree.ElementTree.Element) : Root element of xml
+
+		Returns:
+			SmartDict object to store
+
+		"""
 		data = SmartDict()
 		element = root
 		# Add all the top level items for that element
@@ -174,14 +206,26 @@ class Prefs(object):
 			coreName = blurdev.core.objectName()
 		path = ''
 		if shared:
-			path = osystem.expandvars(os.environ['BDEV_PATH_PREFS_SHARED']) % {'username': getpass.getuser()}
-		# if not shared or the path does not exist use the non shared path. This is for user accounts who do not
+			path = osystem.expandvars(
+				os.environ['BDEV_PATH_PREFS_SHARED']
+			) % {'username': getpass.getuser()}
+		# if not shared or the path does not exist use the non shared path.
+		# This is for user accounts who do not
 		# get network shared preference locations.
 		if not path or not os.path.exists(path):
 			path = osystem.expandvars(os.environ['BDEV_PATH_PREFS'])
 		return os.path.join(path, 'app_%s' % coreName)
 
 	def save(self, path=""):
+		""" Writes the data to file.
+
+		Args:
+			path(str) : Path to the file if not already stored.
+
+		Returns:
+			None
+
+		"""
 		if not path:
 			path = self.filepath
 		with open(path, 'w') as fh:
@@ -193,8 +237,21 @@ class Prefs(object):
 			)
 
 	def load(self, filepath):
+		""" Loads the key/value store from a file.
+
+		Args:
+			filepath(str) : Path to file to load data.
+
+		Returns:
+			None
+
+		Raises:
+			IOError: File is not present
+			ValueError: File cannot be ingested
+
+		"""
 		self.filepath = filepath
- 		if self.filepath:
+		if self.filepath:
 			try:
 				with open(self.filepath, 'r') as fp:
 					self._data = json.load(fp)

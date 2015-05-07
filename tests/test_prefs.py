@@ -26,6 +26,15 @@ def fromxml():
 def newprefs():
 	return Prefs()
 
+@pytest.fixture
+def blurdevprefs():
+	import blurdev
+	bpref = find(
+		'blurdev/core',
+		coreName="treegrunt",
+	)
+	return bpref
+
 # =============================================================================
 # TEST FUNCTIONS
 # =============================================================================
@@ -112,6 +121,10 @@ def test_nested_set_attrs(newprefs):
 	""" Set a nested attr for the prefs. """
 	newprefs.bro.man = "World"
 	assert newprefs.bro == {'man' : 'World'}
+
+def test_blurdev_prefs(blurdevprefs):
+	""" Ingest blurdev prefs and ensure prefs still function. """
+	assert blurdevprefs.name == "blurdev/core"
 
 
 if __name__ == "__main__":
