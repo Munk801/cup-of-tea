@@ -160,7 +160,14 @@ class Prefs(object):
 		Args:
 			key(str) : Element key to retrieve
 			default(object) : If key is not present, default value to pass
+
 		"""
+		try:
+			retvalue = self._data[key]
+		except KeyError:
+			retvalue = default
+		return retvalue
+
 
 	def setAttrs(self):
 		""" Store all the key value pairs as properties for the instance.
